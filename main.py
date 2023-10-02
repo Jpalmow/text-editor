@@ -1,12 +1,15 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import font
-
+from tkinter import colorchooser
 
 showStatusbar=True
 showToolbar=True
+url=""
 fontFamily='Arial'
 fontSize=12
+textChanged=False
+
 
 class MainMenu(Menu):
     def __init__(self, parent, *args, **kwargs):
@@ -24,7 +27,7 @@ class MainMenu(Menu):
         self.file.add_command(label='Open', image=self.open_icon, compound=LEFT, accelerator="Ctrl+O")
         self.file.add_command(label='Save', image=self.save_icon, compound=LEFT, accelerator="Ctrl+S")"""
         
-        self.file.add_command(label='New', compound=LEFT, accelerator="Ctrl+N")
+        self.file.add_command(label='New', compound=LEFT, accelerator="Ctrl+N", command=self.parent.newFile)
         self.file.add_command(label='Open', compound=LEFT, accelerator="Ctrl+O")
         self.file.add_command(label='Save', compound=LEFT, accelerator="Ctrl+S")
         self.file.add_command(label='Save as', compound=LEFT, accelerator="Ctrl+Alt+S")
@@ -131,15 +134,15 @@ class ToolBar(Label):
         btnFontColor.pack(side=LEFT,padx=5)
         ##########################################################
         #self.alignleftIcon=PhotoImage(file='icons/alignleft.png')
-        btnAlignLeft=Button(self)#,image=self.alignleftIcon)
+        btnAlignLeft=Button(self, command=self.parent.alignLeft)#,image=self.alignleftIcon)
         btnAlignLeft.pack(side=LEFT,padx=5)
         ##########################################################
         #self.aligncenterIcon=PhotoImage(file='icons/aligncenter.png')
-        btnAlignCenter=Button(self)#,image=self.aligncenterIcon)
+        btnAlignCenter=Button(self, command=self.parent.alignCenter)#,image=self.aligncenterIcon)
         btnAlignCenter.pack(side=LEFT,padx=5)
         ##########################################################
         #self.alignrightIcon=PhotoImage(file='icons/alignright.png')
-        btnAlignRight=Button(self)#,image=self.alignrightIcon)
+        btnAlignRight=Button(self, command=self.parent.alignRight)#,image=self.alignrightIcon)
         btnAlignRight.pack(side=LEFT,padx=5)
         
         ###############################################################
@@ -182,6 +185,30 @@ class MainApplication(Frame):
         
         #setting focus
         self.texteditor.focus()
+        self.texteditor.configure(font='arial 12')
+        self.texteditor.bind('<<Modified>>', self.changed)
+    
+    def newFile(self,*args):
+        global url
+        try:
+            url=""
+            self.texteditor.delete(1.0, END)
+        except:
+            pass
+    
+        
+    def changed(self,*args):
+        global textChanged
+        flag=self.texteditor.edit_modified()
+        textChanged = True
+        print(flag)
+        if flag:
+            words=len(self.texteditor.get(1.0, 'end-1c').split())
+            letters=len(self.texteditor.get(1.0, 'end-1c'))
+            self.statusbar.config(text="Characters " +str(letters)+ "    Words: "+str(words))
+        self.texteditor.edit_modified(False)
+        
+        
         
     def getFont(self,*args):  
         global fontFamily
@@ -219,12 +246,32 @@ class MainApplication(Frame):
             print("0")
     
     def changeFontColor(self, *args):
+        color = colorchooser.askcolor()
+        print(color)
+        self.texteditor.configure(fg=color[1])
     
+    def alignLeft(self):
+        content = self.texteditor.get(1.0, 'end')
+        self.texteditor.tag_config('left', justify=LEFT)
+        self.texteditor.delete(1.0, 'end')
+        self.texteditor.insert(INSERT, content, 'left')
+        
+    def alignCenter(self):
+        content = self.texteditor.get(1.0, 'end')
+        self.texteditor.tag_config('center', justify=CENTER)
+        self.texteditor.delete(1.0, 'end')
+        self.texteditor.insert(INSERT, content, 'center')        
+        
+    def alignRight(self):
+        content = self.texteditor.get(1.0, 'end')
+        self.texteditor.tag_config('right', justify=RIGHT)
+        self.texteditor.delete(1.0, 'end')
+        self.texteditor.insert(INSERT, content, 'right') 
     
 if __name__=="__main__":
     root=Tk()
     root.title("Text Editor")
     MainApplication(root).pack(side=TOP, fill=BOTH, expand=True)
-    #root.iconbitmap('icons/icon.ico')
+    root.iconbitmap('icons')
     root.geometry("1000x550")
     root.mainloop()
