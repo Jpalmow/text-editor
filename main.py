@@ -144,32 +144,32 @@ class ToolBar(Label):
 
         #######################FONT###############################
 
-        #self.boldIcon=PhotoImage(file='icons/bold.png')
-        btnBold=Button(self, command=self.parent.changeBold)#,"""image=self.boldIcon""")
+        self.boldIcon=PhotoImage(file='icons/bold.png')
+        btnBold=Button(self, command=self.parent.changeBold,image=self.boldIcon)
         btnBold.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.italicIcon=PhotoImage(file='icons/italic.png')
-        btnItalic=Button(self, command=self.parent.changeItalic)#,"""image=self.italicIcon""")
+        self.italicIcon=PhotoImage(file='icons/italic.png')
+        btnItalic=Button(self, command=self.parent.changeItalic,image=self.italicIcon)
         btnItalic.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.underlineIcon=PhotoImage(file='icons/underline.png')
-        btnUnderline=Button(self, command=self.parent.changeUnderline)#,"""image=self.underlineIcon""")
+        self.underlineIcon=PhotoImage(file='icons/underline.png')
+        btnUnderline=Button(self, command=self.parent.changeUnderline,image=self.underlineIcon)
         btnUnderline.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.fontcolorIcon=PhotoImage(file='icons/fontcolor.png')
-        btnFontColor=Button(self, command=self.parent.changeFontColor)#,"""image=self.fontcolorIcon""")
+        self.fontcolorIcon=PhotoImage(file='icons/fontcolor.png')
+        btnFontColor=Button(self, command=self.parent.changeFontColor,image=self.fontcolorIcon)
         btnFontColor.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.alignleftIcon=PhotoImage(file='icons/alignleft.png')
-        btnAlignLeft=Button(self, command=self.parent.alignLeft)#,image=self.alignleftIcon)
+        self.alignleftIcon=PhotoImage(file='icons/alignleft.png')
+        btnAlignLeft=Button(self, command=self.parent.alignLeft,image=self.alignleftIcon)
         btnAlignLeft.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.aligncenterIcon=PhotoImage(file='icons/aligncenter.png')
-        btnAlignCenter=Button(self, command=self.parent.alignCenter)#,image=self.aligncenterIcon)
+        self.aligncenterIcon=PhotoImage(file='icons/aligncenter.png')
+        btnAlignCenter=Button(self, command=self.parent.alignCenter,image=self.aligncenterIcon)
         btnAlignCenter.pack(side=LEFT,padx=5)
         ##########################################################
-        #self.alignrightIcon=PhotoImage(file='icons/alignright.png')
-        btnAlignRight=Button(self, command=self.parent.alignRight)#,image=self.alignrightIcon)
+        self.alignrightIcon=PhotoImage(file='icons/alignright.png')
+        btnAlignRight=Button(self, command=self.parent.alignRight,image=self.alignrightIcon)
         btnAlignRight.pack(side=LEFT,padx=5)
         
         ###############################################################
