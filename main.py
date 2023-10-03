@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import font
-from tkinter import colorchooser
+from tkinter import colorchooser, filedialog, messagebox
 
 showStatusbar=True
 showToolbar=True
@@ -10,7 +10,28 @@ fontFamily='Arial'
 fontSize=12
 textChanged=False
 
-
+class FindDialog(Toplevel):
+    def __init__(self, parent, *args, **kwargs):
+        Toplevel.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.geometry("450x200+550+200")
+        self.title("Find")
+        self.resizable(False, False)
+        
+        txtFind=Label(self, text="Find: ")
+        txtFind.place(x=20, y=20)
+        txtReplace=Label(self, text="Replace: ")
+        txtReplace.place(x=20, y=60)
+        
+        self.findInput=Entry(self, width=30)
+        self.replaceInput=Entry(self, width=30)
+        self.findInput.place(x=100,y=20)
+        self.replaceInput.place(x=100, y=60)
+        self.btnFind=Button(self,text="Find", command=self.parent.findWords)
+        self.btnReplace=Button(self,text="Replace")
+        self.btnFind.place(x=200, y=90)
+        self.btnReplace.place(x=240, y=90)
+        
 class MainMenu(Menu):
     def __init__(self, parent, *args, **kwargs):
         Menu.__init__(self, parent, *args, **kwargs)
@@ -28,19 +49,19 @@ class MainMenu(Menu):
         self.file.add_command(label='Save', image=self.save_icon, compound=LEFT, accelerator="Ctrl+S")"""
         
         self.file.add_command(label='New', compound=LEFT, accelerator="Ctrl+N", command=self.parent.newFile)
-        self.file.add_command(label='Open', compound=LEFT, accelerator="Ctrl+O")
-        self.file.add_command(label='Save', compound=LEFT, accelerator="Ctrl+S")
-        self.file.add_command(label='Save as', compound=LEFT, accelerator="Ctrl+Alt+S")
-        self.file.add_command(label='Exit', compound=LEFT)
+        self.file.add_command(label='Open', compound=LEFT, accelerator="Ctrl+O", command=self.parent.openFile)
+        self.file.add_command(label='Save', compound=LEFT, accelerator="Ctrl+S", command=self.parent.saveFile)
+        self.file.add_command(label='Save as', compound=LEFT, accelerator="Ctrl+Alt+S", command=self.parent.saveFileAs)
+        self.file.add_command(label='Exit', compound=LEFT, command=self.parent.exitFunc)
         
         ###Edit_menu###
         
         self.edit=Menu(self, tearoff=0)
-        self.edit.add_command(label='Copy', compound=LEFT, accelerator="Ctrl+C")
-        self.edit.add_command(label='Paste', compound=LEFT, accelerator="Ctrl+V")
-        self.edit.add_command(label='Cut', compound=LEFT, accelerator="Ctrl+X")
-        self.edit.add_command(label='Clear All', compound=LEFT, accelerator="Ctrl+Alt+C")
-        self.edit.add_command(label='Find', compound=LEFT, accelerator="Ctrl+F")
+        self.edit.add_command(label='Copy', compound=LEFT, accelerator="Ctrl+C", command=lambda :self.parent.texteditor.event_generate("<Control c>"))
+        self.edit.add_command(label='Paste', compound=LEFT, accelerator="Ctrl+V", command=lambda :self.parent.texteditor.event_generate("<Control v>"))
+        self.edit.add_command(label='Cut', compound=LEFT, accelerator="Ctrl+X", command=lambda :self.parent.texteditor.event_generate("<Control x>"))
+        self.edit.add_command(label='Clear All', compound=LEFT, accelerator="Ctrl+Alt+C", command=lambda :self.parent.texteditor.delete(1.0,END))
+        self.edit.add_command(label='Find', compound=LEFT, accelerator="Ctrl+F", command=self.parent.find)
         
         ###view menu###
     
@@ -68,14 +89,20 @@ class MainMenu(Menu):
         
         self.theme_choise=StringVar()
         for i in sorted(self.color_list):
-            self.themes.add_radiobutton(label=i, variable=self.theme_choise)
+            self.themes.add_radiobutton(label=i, variable=self.theme_choise, command=self.changeTheme)
         
         self.add_cascade(label='File', menu=self.file)
         self.add_cascade(label='Edit', menu=self.edit)
         self.add_cascade(label='View', menu=self.view)
         self.add_cascade(label='Theme', menu=self.themes)
+        self.about=Menu(self,tearoff=0)
+        self.add_cascade(label="About", command=self.parent.aboutMessage)
         
-        
+    def changeTheme(self):
+        selected_theme=self.theme_choise.get()
+        fg_bg_color=self.color_list.get(selected_theme)
+        foreground_color,background_color=fg_bg_color.split('.')
+        self.parent.texteditor.config(background=background_color, foreground=foreground_color)
         
         
         
@@ -188,14 +215,86 @@ class MainApplication(Frame):
         self.texteditor.configure(font='arial 12')
         self.texteditor.bind('<<Modified>>', self.changed)
     
+    
+    def aboutMessage(self,*args):
+        messagebox.showinfo("About", "This is about page\nhave a question?\nmail me on pacek93@gmaciul.com")
+        
+    
+    def exitFunc(self,*args):
+        global url, textChanged
+        
+        try:
+            if textChanged == True:
+                mbox=messagebox.askyesnocancel("Warning", "Do you want to save the file")
+                
+                if mbox is True:
+                    if url !="":
+                        content=self.texteditor.get(1.0, END)
+                        with open(url, 'w', encoding='utf-8') as file:
+                            file.write(content)
+                            self.parent.destroy()
+                    else:
+                        content2=str(self.texteditor.get(1.0,END))
+                        url=filedialog.asksaveasfile(mode='w', defaultextension=".txt", filetypes=(("Text file", "*.txt"),("All files", "*.*")))
+                        url.write(content2)
+                        url.close()
+                if mbox is False:
+                    self.parent.destroy()
+            else:
+                self.parent.destroy()
+        except:
+            return                    
+        
+    
+    def saveFileAs(self,*args):
+        global url
+        try:
+            url=filedialog.asksaveasfile(mode='w', defaultextension=".txt", filetypes=(("Text file", "*.txt"),("All files", "*.*")))
+            content=str(self.texteditor.get(1.0,END))
+            url.write(content)
+            url.close()
+            
+        except:
+            return
+    
+    def saveFile(self,*args):
+        global url
+        try:
+            if url !="":
+                content=str(self.texteditor.get(1.0,END))
+                with open(url,'w', encoding='utf-8') as file:
+                    file.write(content)
+                    
+            else:
+                url=filedialog.asksaveasfile(mode='w', defaultextension=".txt", filetypes=(("Text file", "*.txt"),("All files", "*.*")))
+                content2=str(self.texteditor.get(1.0,END))
+                url.write(content2)
+                url.close()
+        except:
+            return
+   
+    def openFile(self,*args):
+        global url
+        url=filedialog.askopenfilename(initialdir="/", title="Select a file to open", filetypes=(("Text file","*.txt"),("All Files","*.*")))
+        
+        try:   
+            with open(url, 'r') as file:
+                self.texteditor.delete(1.0, END)
+                self.texteditor.insert(1.0,file.read())
+        except:
+            return
+        
+        self.parent.title("PadNote--- "'"'+str(url.split('/')[-1]) +'"'" ---Now Editing")
+   
     def newFile(self,*args):
         global url
         try:
             url=""
             self.texteditor.delete(1.0, END)
         except:
-            pass
-    
+            return
+        
+        self.parent.title("Unknown.txt ---Now Editing")
         
     def changed(self,*args):
         global textChanged
@@ -268,9 +367,13 @@ class MainApplication(Frame):
         self.texteditor.delete(1.0, 'end')
         self.texteditor.insert(INSERT, content, 'right') 
     
+    def find(self,*args):
+        self.find=FindDialog(parent=self)
+        
+        
 if __name__=="__main__":
     root=Tk()
-    root.title("Text Editor")
+    root.title("PadNote--- "+'"'+("Unknown.txt" if url=="" else str(url.split('/')[-1]))+"'"+" ---Now Editing")
     MainApplication(root).pack(side=TOP, fill=BOTH, expand=True)
     root.iconbitmap('icons')
     root.geometry("1000x550")
