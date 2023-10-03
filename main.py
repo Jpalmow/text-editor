@@ -28,7 +28,7 @@ class FindDialog(Toplevel):
         self.findInput.place(x=100,y=20)
         self.replaceInput.place(x=100, y=60)
         self.btnFind=Button(self,text="Find", command=self.parent.findWords)
-        self.btnReplace=Button(self,text="Replace")
+        self.btnReplace=Button(self,text="Replace", command=self.parent.replaceWords)
         self.btnFind.place(x=200, y=90)
         self.btnReplace.place(x=240, y=90)
         
@@ -69,8 +69,8 @@ class MainMenu(Menu):
         global showToolbar
             
         self.view=Menu(self, tearoff=0)
-        self.view.add_checkbutton(onvalue=True, offvalue=False, label="Tool Bar", variable=showToolbar)
-        self.view.add_checkbutton(onvalue=True, offvalue=False, label="Status Bar", variable=showStatusbar)
+        self.view.add_checkbutton(onvalue=True, offvalue=False, label="Tool Bar", variable=showToolbar, command=self.parent.hideToolbar)
+        self.view.add_checkbutton(onvalue=True, offvalue=False, label="Status Bar", variable=showStatusbar, command=self.parent.hideStatusbar)
         
         ###themes menu###
         
@@ -113,13 +113,13 @@ class TextEditor(Text):
         self.config(wrap='word') 
         self.pack(expand=YES, fill=BOTH)   
         self.config(relief=FLAT)
-        xscrollbar=Scrollbar(self, orient=HORIZONTAL)
-        xscrollbar.pack(side=BOTTOM, fill=X)
-        yscrollbar=Scrollbar(self, orient=VERTICAL)
-        yscrollbar.pack(side=RIGHT, fill=Y)
-        xscrollbar.config(command=self.xview)
-        yscrollbar.config(command=self.yview)
-
+      
+        
+        scroll_bar=Scrollbar(self, bd=5, relief=SUNKEN)
+        
+        self.configure(yscrollcommand=scroll_bar.set)
+        scroll_bar.config(command=self.yview)
+        scroll_bar.pack(side=RIGHT, fill=Y)
 
 class StatusBar(Label):
     def __init__(self, parent, *args, **kwargs):
@@ -146,7 +146,7 @@ class ToolBar(Label):
 
         self.boldIcon=PhotoImage(file='icons/bold.png')
         btnBold=Button(self, command=self.parent.changeBold,image=self.boldIcon)
-        btnBold.pack(side=LEFT,padx=5)
+        btnBold.pack(side=LEFT,padx=(350,5))
         ##########################################################
         self.italicIcon=PhotoImage(file='icons/italic.png')
         btnItalic=Button(self, command=self.parent.changeItalic,image=self.italicIcon)
@@ -172,7 +172,7 @@ class ToolBar(Label):
         btnAlignRight=Button(self, command=self.parent.alignRight,image=self.alignrightIcon)
         btnAlignRight.pack(side=LEFT,padx=5)
         
-        ###############################################################
+##################################################################
         
         fonts=font.families()
         fontList=[]
@@ -300,15 +300,13 @@ class MainApplication(Frame):
         global textChanged
         flag=self.texteditor.edit_modified()
         textChanged = True
-        print(flag)
         if flag:
             words=len(self.texteditor.get(1.0, 'end-1c').split())
             letters=len(self.texteditor.get(1.0, 'end-1c'))
             self.statusbar.config(text="Characters " +str(letters)+ "    Words: "+str(words))
         self.texteditor.edit_modified(False)
         
-        
-        
+            
     def getFont(self,*args):  
         global fontFamily
         fontFamily=self.toolbar.cbFont.get()
@@ -321,7 +319,6 @@ class MainApplication(Frame):
         
     def changeBold(self,*args):
         text_pro=font.Font(font=self.texteditor['font'])
-        print(text_pro.actual('weight'))
         if text_pro.actual('weight')=='normal':
             self.texteditor.configure(font=(fontFamily,fontSize,'bold'))
         elif text_pro.actual('weight')=='bold':
@@ -344,6 +341,7 @@ class MainApplication(Frame):
             self.texteditor.configure(font=(fontFamily,fontSize,'normal'))
             print("0")
     
+
     def changeFontColor(self, *args):
         color = colorchooser.askcolor()
         print(color)
@@ -369,8 +367,59 @@ class MainApplication(Frame):
     
     def find(self,*args):
         self.find=FindDialog(parent=self)
-        
-        
+
+    def findWords(self,*args):
+        word=self.find.findInput.get()
+        self.texteditor.tag_remove('match','1.0',END) 
+
+        matches = 0
+        if word:
+            start_pos = '1.0'
+            while True:
+                start_pos=self.texteditor.search(word, start_pos, stopindex=END)
+                if not start_pos:
+                    break
+                end_pos='{}+{}c'.format(start_pos,len(word))
+                self.texteditor.tag_add('match', start_pos, end_pos)
+                matches +=1
+                start_pos=end_pos
+                self.texteditor.tag_config('match', foreground='red', background='yellow')
+
+    def replaceWords(self,*args):        
+        replaceText=self.find.replaceInput.get()
+        word=self.find.findInput.get()
+        content=self.texteditor.get(1.0, END)
+        newValue=content.replace(word, replaceText)
+        self.texteditor.delete(1.0, END)
+        self.texteditor.insert(1.0, newValue)
+
+    def hideToolbar(self, *args):
+        global showToolbar
+        if showToolbar == True:
+            self.toolbar.pack_forget()
+            showToolbar = False
+        else:
+            self.texteditor.pack_forget()
+            self.statusbar.pack_forget()
+            self.toolbar.pack(side=TOP, fill=X)
+            self.texteditor.pack(expand=YES, fill=BOTH)
+            self.statusbar.pack(side=BOTTOM)
+            showToolbar = True
+
+    
+    
+    def hideStatusbar(self, *args):
+        global showStatusbar
+        if showStatusbar == True:
+            self.statusbar.pack_forget()
+            showStatusbar = False
+        else:
+            self.statusbar.pack(side=BOTTOM, fill=X)
+            showStatusbar = True
+
+
+
+
 if __name__=="__main__":
     root=Tk()
     root.title("PadNote--- "+'"'+("Unknown.txt" if url=="" else str(url.split('/')[-1]))+"'"+" ---Now Editing")
